@@ -1,154 +1,143 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabaseClient";
-import { useRouter } from "next/navigation";
+import { supabase } from "../../lib/supabaseClient";
 
 export default function TasksPage() {
-  const [tasks, setTasks] = useState<any[]>([]);
+  const [tasks, setTasks] = useState([]);
   const [title, setTitle] = useState("");
-
-  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingId, setEditingId] = useState(null);
   const [editText, setEditText] = useState("");
 
-  const router = useRouter();
-
-  // CHECK LOGIN
-  useEffect(() => {
-    const checkUser = async () => {
-      const { data } = await supabase.auth.getUser();
-      if (!data.user) router.push("/login");
-    };
-    checkUser();
-  }, []);
-
-  // GET USER TASKS
+  // 🔄 FETCH TASKS
   const fetchTasks = async () => {
-    const { data: userData } = await supabase.auth.getUser();
-
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("tasks")
       .select("*")
-      .eq("user_id", userData.user?.id);
+      .order("created_at", { ascending: false });
 
-    setTasks(data || []);
+    if (!error) setTasks(data);
   };
 
   useEffect(() => {
     fetchTasks();
   }, []);
 
-  // ADD TASK
+  // ➕ ADD TASK
   const addTask = async () => {
-    if (!title.trim()) return;
+    if (!title) return;
 
-    const { data: userData } = await supabase.auth.getUser();
-
-    await supabase.from("tasks").insert([
-      {
-        title,
-        user_id: userData.user?.id,
-      },
-    ]);
-
+    await supabase.from("tasks").insert([{ title }]);
     setTitle("");
     fetchTasks();
   };
 
-  // DELETE TASK
-  const deleteTask = async (id: string) => {
+  // ❌ DELETE TASK
+  const deleteTask = async (id) => {
     await supabase.from("tasks").delete().eq("id", id);
     fetchTasks();
   };
 
-  // START EDIT
-  const startEdit = (task: any) => {
+  // ✏️ START EDIT
+  const startEdit = (task) => {
     setEditingId(task.id);
     setEditText(task.title);
   };
 
-  // UPDATE TASK
-  const updateTask = async (id: string) => {
+  // 💾 UPDATE TASK
+  const updateTask = async (id) => {
     await supabase
       .from("tasks")
       .update({ title: editText })
       .eq("id", id);
 
     setEditingId(null);
-    setEditText("");
     fetchTasks();
   };
 
-  // LOGOUT
+  // 🚪 LOGOUT
   const logout = async () => {
     await supabase.auth.signOut();
-    router.push("/login");
+    window.location.href = "/login";
   };
 
   return (
-    <div style={{
-      maxWidth: 500,
-      margin: "50px auto",
-      padding: 20,
-      fontFamily: "Arial"
-    }}>
-      <h1 style={{ textAlign: "center" }}>📋 My Tasks</h1>
+    <div className="min-h-screen bg-gradient-to-br from-blue-100 to-purple-200 p-6">
+      <div className="max-w-xl mx-auto bg-white p-6 rounded-2xl shadow-lg">
 
-      <button onClick={logout} style={{ marginBottom: 20 }}>
-        Logout
-      </button>
+        <h1 className="text-3xl font-bold text-center mb-6">
+          📋 Task Manager
+        </h1>
 
-      {/* INPUT */}
-      <div style={{ display: "flex", gap: 10 }}>
-        <input
-          value={title}
-          placeholder="Enter task..."
-          onChange={(e) => setTitle(e.target.value)}
-          style={{ flex: 1, padding: 10 }}
-        />
-        <button onClick={addTask}>Add</button>
-      </div>
+        <button
+          onClick={logout}
+          className="mb-4 bg-red-500 hover:bg-red-600 text-white px-4 py-1 rounded-lg"
+        >
+          Logout
+        </button>
 
-      {/* LIST */}
-      <ul style={{ listStyle: "none", padding: 0, marginTop: 20 }}>
-        {tasks.map((task) => (
-          <li
-            key={task.id}
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              padding: 10,
-              marginBottom: 10,
-              border: "1px solid #ddd",
-              borderRadius: 8
-            }}
+        {/* INPUT */}
+        <div className="flex gap-2 mb-4">
+          <input
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder="Enter task..."
+            className="flex-1 border p-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
+          />
+          <button
+            onClick={addTask}
+            className="bg-blue-500 hover:bg-blue-600 text-white px-4 rounded-lg"
           >
-            {editingId === task.id ? (
-              <>
-                <input
-                  value={editText}
-                  onChange={(e) => setEditText(e.target.value)}
-                  style={{ flex: 1 }}
-                />
-                <button onClick={() => updateTask(task.id)}>
-                  Save
-                </button>
-              </>
-            ) : (
-              <>
-                <span>{task.title}</span>
+            Add
+          </button>
+        </div>
 
-                <div>
-                  <button onClick={() => startEdit(task)}>✏️</button>
-                  <button onClick={() => deleteTask(task.id)}>
-                    🗑️
+        {/* TASK LIST */}
+        <ul className="space-y-3">
+          {tasks.map((task) => (
+            <li
+              key={task.id}
+              className="flex justify-between items-center bg-gray-100 p-3 rounded-xl shadow-sm"
+            >
+              {editingId === task.id ? (
+                <>
+                  <input
+                    value={editText}
+                    onChange={(e) => setEditText(e.target.value)}
+                    className="border p-1 rounded flex-1"
+                  />
+                  <button
+                    onClick={() => updateTask(task.id)}
+                    className="ml-2 bg-green-500 text-white px-2 rounded"
+                  >
+                    Save
                   </button>
-                </div>
-              </>
-            )}
-          </li>
-        ))}
-      </ul>
+                </>
+              ) : (
+                <>
+                  <span className="font-medium">{task.title}</span>
+
+                  <div className="flex gap-3 text-lg">
+                    <button
+                      onClick={() => startEdit(task)}
+                      className="text-blue-500 hover:scale-110"
+                    >
+                      ✏️
+                    </button>
+                    <button
+                      onClick={() => deleteTask(task.id)}
+                      className="text-red-500 hover:scale-110"
+                    >
+                      🗑️
+                    </button>
+                  </div>
+                </>
+              )}
+            </li>
+          ))}
+        </ul>
+
+      </div>
     </div>
   );
 }
