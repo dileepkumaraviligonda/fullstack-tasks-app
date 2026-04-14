@@ -14,7 +14,6 @@ export default function TasksPage() {
   // 🔄 FETCH USER TASKS
   const fetchTasks = async () => {
     const { data: userData } = await supabase.auth.getUser();
-
     if (!userData.user) return;
 
     const { data, error } = await supabase
@@ -80,10 +79,18 @@ export default function TasksPage() {
     fetchTasks();
   };
 
-  // 🔍 FILTER TASKS
+  // 🔍 FILTER
   const filteredTasks = tasks.filter((task) =>
     task.title.toLowerCase().includes(search.toLowerCase())
   );
+
+  // 📊 DASHBOARD CALCULATIONS (VERY IMPORTANT)
+  const totalTasks = tasks.length;
+  const completedTasks = tasks.filter((t) => t.completed).length;
+  const pendingTasks = totalTasks - completedTasks;
+  const progress = totalTasks
+    ? Math.round((completedTasks / totalTasks) * 100)
+    : 0;
 
   // 🌙 DARK MODE
   const toggleDarkMode = () => {
@@ -109,11 +116,12 @@ export default function TasksPage() {
           darkMode ? "bg-gray-800" : "bg-white"
         }`}
       >
+        {/* TITLE */}
         <h1 className="text-3xl font-bold text-center mb-6">
           📋 Task Manager
         </h1>
 
-        {/* 🌙 DARK MODE */}
+        {/* DARK MODE + LOGOUT */}
         <button
           onClick={toggleDarkMode}
           className="mb-2 bg-gray-700 text-white px-3 py-1 rounded"
@@ -121,13 +129,43 @@ export default function TasksPage() {
           {darkMode ? "☀️ Light Mode" : "🌙 Dark Mode"}
         </button>
 
-        {/* LOGOUT */}
         <button
           onClick={logout}
           className="mb-4 ml-2 bg-red-500 text-white px-3 py-1 rounded"
         >
           Logout
         </button>
+
+        {/* 📊 DASHBOARD */}
+        <div className="grid grid-cols-2 gap-3 mb-4">
+          <div className="bg-blue-500 text-white p-3 rounded-lg text-center">
+            <p className="text-sm">Total</p>
+            <p className="text-xl font-bold">{totalTasks}</p>
+          </div>
+
+          <div className="bg-green-500 text-white p-3 rounded-lg text-center">
+            <p className="text-sm">Completed</p>
+            <p className="text-xl font-bold">{completedTasks}</p>
+          </div>
+
+          <div className="bg-yellow-500 text-white p-3 rounded-lg text-center">
+            <p className="text-sm">Pending</p>
+            <p className="text-xl font-bold">{pendingTasks}</p>
+          </div>
+
+          <div className="bg-purple-500 text-white p-3 rounded-lg text-center">
+            <p className="text-sm">Progress</p>
+            <p className="text-xl font-bold">{progress}%</p>
+          </div>
+        </div>
+
+        {/* 📊 PROGRESS BAR */}
+        <div className="w-full bg-gray-300 rounded-full h-3 mb-4">
+          <div
+            className="bg-green-500 h-3 rounded-full"
+            style={{ width: `${progress}%` }}
+          ></div>
+        </div>
 
         {/* ADD TASK */}
         <div className="flex gap-2 mb-4">
@@ -163,7 +201,7 @@ export default function TasksPage() {
               }`}
             >
               <div className="flex items-center gap-2 flex-1">
-                {/* ✔ CHECKBOX */}
+                {/* CHECKBOX */}
                 <input
                   type="checkbox"
                   checked={task.completed || false}
