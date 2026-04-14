@@ -8,7 +8,8 @@ export default function TasksPage() {
   const [title, setTitle] = useState("");
   const [editingId, setEditingId] = useState(null);
   const [editText, setEditText] = useState("");
-  const [search, setSearch] = useState(""); // 🔍 search state
+  const [search, setSearch] = useState("");
+  const [darkMode, setDarkMode] = useState(false);
 
   // 🔄 FETCH TASKS
   const fetchTasks = async () => {
@@ -66,10 +67,15 @@ export default function TasksPage() {
     fetchTasks();
   };
 
-  // 🔍 FILTER TASKS
+  // 🔍 FILTER
   const filteredTasks = tasks.filter((task) =>
     task.title.toLowerCase().includes(search.toLowerCase())
   );
+
+  // 🌙 DARK MODE TOGGLE
+  const toggleDarkMode = () => {
+    setDarkMode(!darkMode);
+  };
 
   // 🚪 LOGOUT
   const logout = async () => {
@@ -78,27 +84,45 @@ export default function TasksPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-100 to-purple-200 p-6">
-      <div className="max-w-xl mx-auto bg-white p-6 rounded-2xl shadow-lg">
-
+    <div
+      className={`min-h-screen p-6 ${
+        darkMode
+          ? "bg-gray-900 text-white"
+          : "bg-gradient-to-br from-blue-100 to-purple-200"
+      }`}
+    >
+      <div
+        className={`max-w-xl mx-auto p-6 rounded-2xl shadow-lg ${
+          darkMode ? "bg-gray-800" : "bg-white"
+        }`}
+      >
         <h1 className="text-3xl font-bold text-center mb-6">
           📋 Task Manager
         </h1>
 
+        {/* 🌙 DARK MODE BUTTON */}
+        <button
+          onClick={toggleDarkMode}
+          className="mb-2 bg-gray-700 text-white px-3 py-1 rounded"
+        >
+          {darkMode ? "☀️ Light Mode" : "🌙 Dark Mode"}
+        </button>
+
+        {/* LOGOUT */}
         <button
           onClick={logout}
-          className="mb-4 bg-red-500 text-white px-4 py-1 rounded-lg"
+          className="mb-4 ml-2 bg-red-500 text-white px-3 py-1 rounded"
         >
           Logout
         </button>
 
-        {/* INPUT */}
+        {/* ADD TASK */}
         <div className="flex gap-2 mb-4">
           <input
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             placeholder="Enter task..."
-            className="flex-1 border p-2 rounded-lg"
+            className="flex-1 border p-2 rounded-lg text-black"
           />
           <button
             onClick={addTask}
@@ -108,12 +132,12 @@ export default function TasksPage() {
           </button>
         </div>
 
-        {/* 🔍 SEARCH */}
+        {/* SEARCH */}
         <input
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search tasks..."
-          className="w-full mb-4 border p-2 rounded-lg"
+          className="w-full mb-4 border p-2 rounded-lg text-black"
         />
 
         {/* TASK LIST */}
@@ -121,11 +145,12 @@ export default function TasksPage() {
           {filteredTasks.map((task) => (
             <li
               key={task.id}
-              className="flex justify-between items-center bg-gray-100 p-3 rounded-xl"
+              className={`flex justify-between items-center p-3 rounded-xl ${
+                darkMode ? "bg-gray-700" : "bg-gray-100"
+              }`}
             >
               <div className="flex items-center gap-2 flex-1">
-
-                {/* ✔ CHECKBOX */}
+                {/* CHECKBOX */}
                 <input
                   type="checkbox"
                   checked={task.completed || false}
@@ -136,7 +161,7 @@ export default function TasksPage() {
                   <input
                     value={editText}
                     onChange={(e) => setEditText(e.target.value)}
-                    className="border p-1 rounded flex-1"
+                    className="border p-1 rounded flex-1 text-black"
                   />
                 ) : (
                   <span
@@ -163,13 +188,13 @@ export default function TasksPage() {
                   <>
                     <button
                       onClick={() => startEdit(task)}
-                      className="text-blue-500"
+                      className="text-blue-400"
                     >
                       ✏️
                     </button>
                     <button
                       onClick={() => deleteTask(task.id)}
-                      className="text-red-500"
+                      className="text-red-400"
                     >
                       🗑️
                     </button>
@@ -179,7 +204,6 @@ export default function TasksPage() {
             </li>
           ))}
         </ul>
-
       </div>
     </div>
   );
