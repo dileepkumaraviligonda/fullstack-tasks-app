@@ -8,7 +8,9 @@ export default function TasksPage() {
   const [title, setTitle] = useState("");
   const [editingId, setEditingId] = useState(null);
   const [editText, setEditText] = useState("");
+  const [search, setSearch] = useState(""); // 🔍 search state
 
+  // 🔄 FETCH TASKS
   const fetchTasks = async () => {
     const { data, error } = await supabase
       .from("tasks")
@@ -22,6 +24,7 @@ export default function TasksPage() {
     fetchTasks();
   }, []);
 
+  // ➕ ADD TASK
   const addTask = async () => {
     if (!title) return;
 
@@ -30,16 +33,19 @@ export default function TasksPage() {
     fetchTasks();
   };
 
+  // ❌ DELETE TASK
   const deleteTask = async (id) => {
     await supabase.from("tasks").delete().eq("id", id);
     fetchTasks();
   };
 
+  // ✏️ START EDIT
   const startEdit = (task) => {
     setEditingId(task.id);
     setEditText(task.title);
   };
 
+  // 💾 UPDATE TASK
   const updateTask = async (id) => {
     await supabase
       .from("tasks")
@@ -50,7 +56,7 @@ export default function TasksPage() {
     fetchTasks();
   };
 
-  // ✅ TOGGLE COMPLETE
+  // ✔ TOGGLE COMPLETE
   const toggleComplete = async (task) => {
     await supabase
       .from("tasks")
@@ -60,6 +66,12 @@ export default function TasksPage() {
     fetchTasks();
   };
 
+  // 🔍 FILTER TASKS
+  const filteredTasks = tasks.filter((task) =>
+    task.title.toLowerCase().includes(search.toLowerCase())
+  );
+
+  // 🚪 LOGOUT
   const logout = async () => {
     await supabase.auth.signOut();
     window.location.href = "/login";
@@ -96,9 +108,17 @@ export default function TasksPage() {
           </button>
         </div>
 
+        {/* 🔍 SEARCH */}
+        <input
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Search tasks..."
+          className="w-full mb-4 border p-2 rounded-lg"
+        />
+
         {/* TASK LIST */}
         <ul className="space-y-3">
-          {tasks.map((task) => (
+          {filteredTasks.map((task) => (
             <li
               key={task.id}
               className="flex justify-between items-center bg-gray-100 p-3 rounded-xl"
