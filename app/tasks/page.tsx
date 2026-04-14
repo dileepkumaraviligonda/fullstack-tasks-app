@@ -1,3 +1,5 @@
+import { redirect } from "next/navigation";
+import { supabase } from "../../lib/supabaseClient";
 "use client";
 
 import { useEffect, useState } from "react";
@@ -28,6 +30,12 @@ export default function TasksPage() {
   useEffect(() => {
     fetchTasks();
   }, []);
+  const checkUser = async () => {
+  const { data } = await supabase.auth.getUser();
+  if (!data.user) {
+    redirect("/login");
+  }
+};
 
   // ➕ ADD TASK
   const addTask = async () => {
