@@ -11,11 +11,16 @@ export default function TasksPage() {
   const [search, setSearch] = useState("");
   const [darkMode, setDarkMode] = useState(false);
 
-  // 🔄 FETCH TASKS
+  // 🔄 FETCH USER TASKS
   const fetchTasks = async () => {
+    const { data: userData } = await supabase.auth.getUser();
+
+    if (!userData.user) return;
+
     const { data, error } = await supabase
       .from("tasks")
       .select("*")
+      .eq("user_id", userData.user.id)
       .order("created_at", { ascending: false });
 
     if (!error) setTasks(data);
@@ -29,7 +34,15 @@ export default function TasksPage() {
   const addTask = async () => {
     if (!title) return;
 
-    await supabase.from("tasks").insert([{ title }]);
+    const { data: userData } = await supabase.auth.getUser();
+
+    await supabase.from("tasks").insert([
+      {
+        title,
+        user_id: userData.user.id,
+      },
+    ]);
+
     setTitle("");
     fetchTasks();
   };
@@ -67,12 +80,12 @@ export default function TasksPage() {
     fetchTasks();
   };
 
-  // 🔍 FILTER
+  // 🔍 FILTER TASKS
   const filteredTasks = tasks.filter((task) =>
     task.title.toLowerCase().includes(search.toLowerCase())
   );
 
-  // 🌙 DARK MODE TOGGLE
+  // 🌙 DARK MODE
   const toggleDarkMode = () => {
     setDarkMode(!darkMode);
   };
@@ -100,7 +113,7 @@ export default function TasksPage() {
           📋 Task Manager
         </h1>
 
-        {/* 🌙 DARK MODE BUTTON */}
+        {/* 🌙 DARK MODE */}
         <button
           onClick={toggleDarkMode}
           className="mb-2 bg-gray-700 text-white px-3 py-1 rounded"
@@ -150,7 +163,7 @@ export default function TasksPage() {
               }`}
             >
               <div className="flex items-center gap-2 flex-1">
-                {/* CHECKBOX */}
+                {/* ✔ CHECKBOX */}
                 <input
                   type="checkbox"
                   checked={task.completed || false}
