@@ -9,7 +9,6 @@ export default function TasksPage() {
   const [editingId, setEditingId] = useState(null);
   const [editText, setEditText] = useState("");
 
-  // 🔄 FETCH TASKS
   const fetchTasks = async () => {
     const { data, error } = await supabase
       .from("tasks")
@@ -23,7 +22,6 @@ export default function TasksPage() {
     fetchTasks();
   }, []);
 
-  // ➕ ADD TASK
   const addTask = async () => {
     if (!title) return;
 
@@ -32,19 +30,16 @@ export default function TasksPage() {
     fetchTasks();
   };
 
-  // ❌ DELETE TASK
   const deleteTask = async (id) => {
     await supabase.from("tasks").delete().eq("id", id);
     fetchTasks();
   };
 
-  // ✏️ START EDIT
   const startEdit = (task) => {
     setEditingId(task.id);
     setEditText(task.title);
   };
 
-  // 💾 UPDATE TASK
   const updateTask = async (id) => {
     await supabase
       .from("tasks")
@@ -55,7 +50,16 @@ export default function TasksPage() {
     fetchTasks();
   };
 
-  // 🚪 LOGOUT
+  // ✅ TOGGLE COMPLETE
+  const toggleComplete = async (task) => {
+    await supabase
+      .from("tasks")
+      .update({ completed: !task.completed })
+      .eq("id", task.id);
+
+    fetchTasks();
+  };
+
   const logout = async () => {
     await supabase.auth.signOut();
     window.location.href = "/login";
@@ -71,7 +75,7 @@ export default function TasksPage() {
 
         <button
           onClick={logout}
-          className="mb-4 bg-red-500 hover:bg-red-600 text-white px-4 py-1 rounded-lg"
+          className="mb-4 bg-red-500 text-white px-4 py-1 rounded-lg"
         >
           Logout
         </button>
@@ -82,11 +86,11 @@ export default function TasksPage() {
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             placeholder="Enter task..."
-            className="flex-1 border p-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
+            className="flex-1 border p-2 rounded-lg"
           />
           <button
             onClick={addTask}
-            className="bg-blue-500 hover:bg-blue-600 text-white px-4 rounded-lg"
+            className="bg-blue-500 text-white px-4 rounded-lg"
           >
             Add
           </button>
@@ -97,42 +101,61 @@ export default function TasksPage() {
           {tasks.map((task) => (
             <li
               key={task.id}
-              className="flex justify-between items-center bg-gray-100 p-3 rounded-xl shadow-sm"
+              className="flex justify-between items-center bg-gray-100 p-3 rounded-xl"
             >
-              {editingId === task.id ? (
-                <>
+              <div className="flex items-center gap-2 flex-1">
+
+                {/* ✔ CHECKBOX */}
+                <input
+                  type="checkbox"
+                  checked={task.completed || false}
+                  onChange={() => toggleComplete(task)}
+                />
+
+                {editingId === task.id ? (
                   <input
                     value={editText}
                     onChange={(e) => setEditText(e.target.value)}
                     className="border p-1 rounded flex-1"
                   />
+                ) : (
+                  <span
+                    className={`${
+                      task.completed
+                        ? "line-through text-gray-400"
+                        : "font-medium"
+                    }`}
+                  >
+                    {task.title}
+                  </span>
+                )}
+              </div>
+
+              <div className="flex gap-3 text-lg">
+                {editingId === task.id ? (
                   <button
                     onClick={() => updateTask(task.id)}
-                    className="ml-2 bg-green-500 text-white px-2 rounded"
+                    className="text-green-500"
                   >
-                    Save
+                    ✔
                   </button>
-                </>
-              ) : (
-                <>
-                  <span className="font-medium">{task.title}</span>
-
-                  <div className="flex gap-3 text-lg">
+                ) : (
+                  <>
                     <button
                       onClick={() => startEdit(task)}
-                      className="text-blue-500 hover:scale-110"
+                      className="text-blue-500"
                     >
                       ✏️
                     </button>
                     <button
                       onClick={() => deleteTask(task.id)}
-                      className="text-red-500 hover:scale-110"
+                      className="text-red-500"
                     >
                       🗑️
                     </button>
-                  </div>
-                </>
-              )}
+                  </>
+                )}
+              </div>
             </li>
           ))}
         </ul>
